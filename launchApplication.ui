@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>859</width>
-    <height>665</height>
+    <width>688</width>
+    <height>784</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_3">
+   <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="CustomTab" name="tabWidget">
       <property name="tabsClosable">
@@ -34,7 +34,7 @@
        <set>Qt::BottomDockWidgetArea</set>
       </property>
       <widget class="QWidget" name="dockWidgetContents_3">
-       <layout class="QGridLayout" name="gridLayout_2">
+       <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
          <widget class="QLineEdit" name="findValue"/>
         </item>
@@ -80,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>859</width>
+     <width>688</width>
      <height>31</height>
     </rect>
    </property>
@@ -88,62 +88,70 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_Ctrl_N"/>
-    <addaction name="actionOpen_Directory"/>
-    <addaction name="actionOpen_Ctrl_O"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpenDirectory"/>
+    <addaction name="actionOpen"/>
     <addaction name="actionRecent"/>
     <addaction name="separator"/>
-    <addaction name="actionSave_Ctrl_S"/>
-    <addaction name="actionSave_As"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
     <addaction name="separator"/>
-    <addaction name="actionClose_Tab_Ctrl_W"/>
-    <addaction name="actionClose_All_Tab"/>
+    <addaction name="actionCloseTab"/>
+    <addaction name="actionCloseAllTab"/>
     <addaction name="separator"/>
-    <addaction name="actionExit_Alt_F4"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionCut_Ctrl_X"/>
-    <addaction name="actionCopy_Ctrl_C"/>
-    <addaction name="actionPaste_Ctrl_V"/>
-    <addaction name="actionUndo_Ctrl_Z"/>
-    <addaction name="actionRedo_Ctrl_Y"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
     <addaction name="actionIndent"/>
-    <addaction name="actionUnIndent_Shift_Tab"/>
-    <addaction name="actionLine_Cut"/>
-    <addaction name="actionLine_Copy"/>
-    <addaction name="actionLine_Paste"/>
-    <addaction name="actionLine_Move_Ctrl_Shift_up_down"/>
-    <addaction name="actionLine_Transpose"/>
-    <addaction name="actionLine_Duplicate"/>
-    <addaction name="actionComment_Uncomment_Ctrl"/>
-    <addaction name="actionLine_Down_Ctrl_Shift_d"/>
-    <addaction name="actionFold_All"/>
+    <addaction name="actionUnIndent"/>
+    <addaction name="actionLineCut"/>
+    <addaction name="actionLineCopy"/>
+    <addaction name="actionLineMove"/>
+    <addaction name="actionLineTranspose"/>
+    <addaction name="actionLineDuplicate"/>
+    <addaction name="actionCommentUncomment"/>
+    <addaction name="actionLineDown"/>
+    <addaction name="actionFoldAll"/>
+    <addaction name="actionFoldCurrent"/>
+    <addaction name="actionClearFoldings"/>
    </widget>
    <widget class="QMenu" name="menuFind">
     <property name="title">
      <string>Find</string>
     </property>
     <addaction name="actionFind"/>
-    <addaction name="actionFind_All_Ctrl_Shift_F"/>
-    <addaction name="actionReplace_Ctrl_R"/>
-    <addaction name="actionReplace_All_Ctrl_Shift_R"/>
-    <addaction name="actionGoto_Line_Ctrl_G"/>
-    <addaction name="actionHighlight_Ctrl_M"/>
-    <addaction name="actionUpperCase_Alt_U"/>
-    <addaction name="actionLowerCase_Alt_L"/>
-    <addaction name="actionCamelCase_Alt_C"/>
+    <addaction name="actionFindAll"/>
+    <addaction name="actionReplace"/>
+    <addaction name="actionReplaceAll"/>
+    <addaction name="actionGotoLine"/>
+    <addaction name="actionHighlight"/>
+    <addaction name="actionUpperCase"/>
+    <addaction name="actionLowerCase"/>
+    <addaction name="actionCamelCase"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionPythonInterpreter"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuFind"/>
+   <addaction name="menuWindow"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="directoryTreeDockWidget">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -157,17 +165,17 @@
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents">
-    <layout class="QGridLayout" name="gridLayout">
+   <widget class="QWidget" name="directoryDockWidgetContents">
+    <layout class="QGridLayout" name="gridLayout_2">
      <item row="0" column="0">
-      <widget class="DirectoryTree" name="treeView"/>
+      <widget class="DirectoryTree" name="directoryTreeView"/>
      </item>
     </layout>
    </widget>
   </widget>
   <widget class="QDockWidget" name="interpreterDockWidget">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -175,16 +183,35 @@
    <property name="minimumSize">
     <size>
      <width>105</width>
-     <height>150</height>
+     <height>69</height>
     </size>
    </property>
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2">
+   <widget class="QWidget" name="interpreterDockWidgetContents">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <layout class="QGridLayout" name="gridLayout_4">
      <item row="0" column="0">
-      <widget class="EmbedIPython" name="interpreterWidget" native="true"/>
+      <widget class="EmbedIPython" name="interpreterWidget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -194,37 +221,37 @@
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionNew_Ctrl_N">
+  <action name="actionNew">
    <property name="text">
     <string>New                Ctrl+N</string>
    </property>
   </action>
-  <action name="actionOpen_Ctrl_O">
+  <action name="actionOpen">
    <property name="text">
-    <string>Open File           Ctrl+O</string>
+    <string>Open File        Ctrl+O</string>
    </property>
   </action>
-  <action name="actionExit_Alt_F4">
+  <action name="actionExit">
    <property name="text">
     <string>Exit                  Alt+F4</string>
    </property>
   </action>
-  <action name="actionClose_Tab_Ctrl_W">
+  <action name="actionCloseTab">
    <property name="text">
     <string>Close Tab        Ctrl+W</string>
    </property>
   </action>
-  <action name="actionClose_All_Tab">
+  <action name="actionCloseAllTab">
    <property name="text">
     <string>Close All Tab</string>
    </property>
   </action>
-  <action name="actionSave_Ctrl_S">
+  <action name="actionSave">
    <property name="text">
     <string>Save                Ctrl+S</string>
    </property>
   </action>
-  <action name="actionSave_As">
+  <action name="actionSaveAs">
    <property name="text">
     <string>Save As</string>
    </property>
@@ -234,92 +261,92 @@
     <string>Recent</string>
    </property>
   </action>
-  <action name="actionCut_Ctrl_X">
+  <action name="actionCut">
    <property name="text">
-    <string>Cut                Ctrl+X</string>
+    <string>Cut                     Ctrl+X</string>
    </property>
   </action>
-  <action name="actionCopy_Ctrl_C">
+  <action name="actionCopy">
    <property name="text">
-    <string>Copy             Ctrl+C</string>
+    <string>Copy                  Ctrl+C</string>
    </property>
   </action>
-  <action name="actionPaste_Ctrl_V">
+  <action name="actionPaste">
    <property name="text">
-    <string>Paste             Ctrl+V</string>
+    <string>Paste                  Ctrl+V</string>
    </property>
   </action>
-  <action name="actionUndo_Ctrl_Z">
+  <action name="actionUndo">
    <property name="text">
-    <string>Undo            Ctrl+Z</string>
+    <string>Undo                 Ctrl+Z</string>
    </property>
   </action>
-  <action name="actionRedo_Ctrl_Y">
+  <action name="actionRedo">
    <property name="text">
-    <string>Redo             Ctrl+Y</string>
+    <string>Redo                  Ctrl+Y</string>
    </property>
   </action>
   <action name="actionIndent">
    <property name="text">
-    <string>Indent           Tab</string>
+    <string>Indent                Tab</string>
    </property>
   </action>
-  <action name="actionUnIndent_Shift_Tab">
+  <action name="actionUnIndent">
    <property name="text">
-    <string>UnIndent      Shift+Tab</string>
+    <string>UnIndent            Shift+Tab</string>
    </property>
   </action>
-  <action name="actionLine_Cut">
+  <action name="actionLineCut">
    <property name="text">
-    <string>Line Cut        Ctrl+L</string>
+    <string>Line Cut              Ctrl+L</string>
    </property>
   </action>
-  <action name="actionLine_Copy">
+  <action name="actionLineCopy">
    <property name="text">
-    <string>Line Copy     Ctrl+Shift+T</string>
+    <string>Line Copy           Ctrl+Shift+T</string>
    </property>
   </action>
-  <action name="actionLine_Paste">
+  <action name="actionLinePaste">
    <property name="text">
-    <string>Line Paste     Ctrl+Shift+L</string>
+    <string>Line Paste           Ctrl+Shift+L</string>
    </property>
   </action>
-  <action name="actionLine_Duplicate">
+  <action name="actionLineDuplicate">
    <property name="text">
-    <string>Line Duplicate       Ctrl+D</string>
+    <string>Line Duplicate    Ctrl+D</string>
    </property>
   </action>
-  <action name="actionLine_Transpose">
+  <action name="actionLineTranspose">
    <property name="text">
-    <string>Line Transpose      Ctrl+T</string>
+    <string>Line Transpose   Ctrl+T</string>
    </property>
   </action>
-  <action name="actionComment_Uncomment_Ctrl">
+  <action name="actionCommentUncomment">
    <property name="text">
-    <string>Comment/Uncomment    Ctrl+/</string>
+    <string>Un/comment     Ctrl+/</string>
    </property>
   </action>
-  <action name="actionGoto_Line_Ctrl_G">
+  <action name="actionGotoLine">
    <property name="text">
     <string>Goto Line        Ctrl+G</string>
    </property>
   </action>
-  <action name="actionHighlight_Ctrl_M">
+  <action name="actionHighlight">
    <property name="text">
     <string>Highlight        Ctrl+M</string>
    </property>
   </action>
-  <action name="actionUpperCase_Alt_U">
+  <action name="actionUpperCase">
    <property name="text">
     <string>UpperCase       Alt+U</string>
    </property>
   </action>
-  <action name="actionLowerCase_Alt_L">
+  <action name="actionLowerCase">
    <property name="text">
     <string>LowerCase      Alt+L</string>
    </property>
   </action>
-  <action name="actionCamelCase_Alt_C">
+  <action name="actionCamelCase">
    <property name="text">
     <string>CamelCase     Alt+C</string>
    </property>
@@ -329,39 +356,54 @@
     <string>Find             Ctrl+F</string>
    </property>
   </action>
-  <action name="actionFind_All_Ctrl_Shift_F">
+  <action name="actionFindAll">
    <property name="text">
     <string>Find All     Ctrl+Shift+F</string>
    </property>
   </action>
-  <action name="actionReplace_Ctrl_R">
+  <action name="actionReplace">
    <property name="text">
     <string>Replace        Ctrl+R</string>
    </property>
   </action>
-  <action name="actionReplace_All_Ctrl_Shift_R">
+  <action name="actionReplaceAll">
    <property name="text">
     <string>Replace All      Ctrl+Shift+R</string>
    </property>
   </action>
-  <action name="actionLine_Move_Ctrl_Shift_up_down">
+  <action name="actionLineMove">
    <property name="text">
-    <string>Line Move         Ctrl+Shift+u</string>
+    <string>Line Move          Ctrl+Shift+U</string>
    </property>
   </action>
-  <action name="actionLine_Down_Ctrl_Shift_d">
+  <action name="actionLineDown">
    <property name="text">
     <string>Line Down         Ctrl+Shift+d</string>
    </property>
   </action>
-  <action name="actionFold_All">
+  <action name="actionFoldAll">
    <property name="text">
-    <string>Fold All</string>
+    <string>Fold All              Alt+F</string>
    </property>
   </action>
-  <action name="actionOpen_Directory">
+  <action name="actionOpenDirectory">
    <property name="text">
     <string>Open Directory</string>
+   </property>
+  </action>
+  <action name="actionPythonInterpreter">
+   <property name="text">
+    <string>Python Interpreter</string>
+   </property>
+  </action>
+  <action name="actionFoldCurrent">
+   <property name="text">
+    <string>Fold Current      Alt+C</string>
+   </property>
+  </action>
+  <action name="actionClearFoldings">
+   <property name="text">
+    <string>Clear Foldings   Alt+Z</string>
    </property>
   </action>
  </widget>

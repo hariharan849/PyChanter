@@ -55,8 +55,6 @@ class DirectoryTree(_QtWidgets.QTreeView):
         self.folderIcon = _QtGui.QIcon(_constants.folderIcon)
         self.fileIcon = _QtGui.QIcon(_constants.fileIcon)
 
-        # self.displayDirectory(r'E:\python\Pymakr\QScintilla')
-
     def _getDirModel(self, directory):
         """
         Creates directory modelf or the current directory

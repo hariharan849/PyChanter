@@ -17,83 +17,89 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainApplication, self).__init__(parent)
         self.setupUi(self)
-        self.findReplaceWidget.setVisible(False)
+
         self.dialog = None
         self.__setUpActionMenus()
         self._connectWidgets()
         self.__createNewEditor()
+        self._hideInitialWidget()
         self.showMaximized()
+
+    def _hideInitialWidget(self):
+        self.findReplaceWidget.setVisible(False)
+        self.directoryTreeDockWidget.setVisible(False)
+        self.interpreterDockWidget.setVisible(False)
 
     def _connectWidgets(self):
         self.findButton.clicked.connect(self.__find)
         self.findAllButton.clicked.connect(self.__findAll)
         self.replaceButton.clicked.connect(self.__replace)
         self.replaceAllButton.clicked.connect(self.__replaceAll)
-        self.treeView.doubleClicked.connect(self.__createFileTab)
+        self.directoryTreeView.doubleClicked.connect(self.__createFileTab)
 
     def __setUpActionMenus(self):
         '''
         Sets up action slot connection for the application
         '''
-        self.actionNew_Ctrl_N.triggered.connect(self.__createNewEditor)
+        self.actionNew.triggered.connect(self.__createNewEditor)
         newFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+n"), self)
         newFile.activated.connect(self.__createNewEditor)
 
-        self.actionOpen_Directory.triggered.connect(self.__openDirectory)
+        self.actionOpenDirectory.triggered.connect(self.__openDirectory)
 
-        self.actionOpen_Ctrl_O.triggered.connect(self.__openFileDialog)
+        self.actionOpen.triggered.connect(self.__openFileDialog)
         openFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+o"), self)
         openFile.activated.connect(self.__openFileDialog)
 
-        self.actionSave_Ctrl_S.triggered.connect(self.__saveFile)
+        self.actionSave.triggered.connect(self.__saveFile)
         saveFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+s"), self)
         saveFile.activated.connect(self.__saveFile)
 
-        self.actionSave_As.triggered.connect(self.__saveFileAs)
+        self.actionSaveAs.triggered.connect(self.__saveFileAs)
 
-        self.actionClose_Tab_Ctrl_W.triggered.connect(self.__closeCurrentTab)
+        self.actionCloseTab.triggered.connect(self.__closeCurrentTab)
         closeTabAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+w"), self)
         closeTabAction.activated.connect(self.__closeCurrentTab)
 
-        self.actionClose_All_Tab.triggered.connect(self.__closeAllTabs)
+        self.actionCloseAllTab.triggered.connect(self.__closeAllTabs)
 
-        self.actionExit_Alt_F4.triggered.connect(self.__safeExit)
+        self.actionExit.triggered.connect(self.__safeExit)
         exitAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+f4"), self)
         exitAction.activated.connect(self.__safeExit)
 
-        self.actionCut_Ctrl_X.triggered.connect(self.__cut)
+        self.actionCut.triggered.connect(self.__cut)
         cutAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+x"), self)
         cutAction.activated.connect(self.__cut)
 
-        self.actionCopy_Ctrl_C.triggered.connect(self.__copy)
+        self.actionCopy.triggered.connect(self.__copy)
         copyAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+c"), self)
         copyAction.activated.connect(self.__copy)
 
-        self.actionPaste_Ctrl_V.triggered.connect(self.__paste)
+        self.actionPaste.triggered.connect(self.__paste)
         pasteAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+v"), self)
         pasteAction.activated.connect(self.__paste)
 
-        self.actionComment_Uncomment_Ctrl.triggered.connect(self.__commentUncomment)
+        self.actionCommentUncomment.triggered.connect(self.__commentUncomment)
         toggleCommentAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+/"), self)
         toggleCommentAction.activated.connect(self.__commentUncomment)
 
-        self.actionGoto_Line_Ctrl_G.triggered.connect(self.__gotoLine)
+        self.actionGotoLine.triggered.connect(self.__gotoLine)
         gotoLineAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+g"), self)
         gotoLineAction.activated.connect(self.__gotoLine)
 
-        self.actionHighlight_Ctrl_M.triggered.connect(self.__highLight)
-        highlightAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+M"), self)
+        self.actionHighlight.triggered.connect(self.__highLight)
+        highlightAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+m"), self)
         highlightAction.activated.connect(self.__highLight)
 
-        self.actionUpperCase_Alt_U.triggered.connect(lambda: self.__convertCase('u'))
+        self.actionUpperCase.triggered.connect(lambda: self.__convertCase('u'))
         upperCaseAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+u"), self)
         upperCaseAction.activated.connect(lambda: self.__convertCase(True))
 
-        self.actionLowerCase_Alt_L.triggered.connect(lambda: self.__convertCase('l'))
+        self.actionLowerCase.triggered.connect(lambda: self.__convertCase('l'))
         lowerCaseAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+l"), self)
         lowerCaseAction.activated.connect(lambda: self.__convertCase('l'))
 
-        self.actionCamelCase_Alt_C.triggered.connect(lambda: self.__convertCase('c'))
+        self.actionCamelCase.triggered.connect(lambda: self.__convertCase('c'))
         camelCaseAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+c"), self)
         camelCaseAction.activated.connect(lambda: self.__convertCase('c'))
 
@@ -101,27 +107,45 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         findAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+f"), self)
         findAction.activated.connect(self.__findReplace)
 
-        self.actionFind_All_Ctrl_Shift_F.triggered.connect(self.__findReplace)
+        self.actionFindAll.triggered.connect(self.__findReplace)
         findAllAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+shift+f"), self)
         findAllAction.activated.connect(self.__findReplace)
 
-        self.actionReplace_Ctrl_R.triggered.connect(self.__findReplace)
+        self.actionReplace.triggered.connect(self.__findReplace)
         replaceAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+r"), self)
         replaceAction.activated.connect(self.__findReplace)
 
-        self.actionReplace_All_Ctrl_Shift_R.triggered.connect(self.__findReplace)
+        self.actionReplaceAll.triggered.connect(self.__findReplace)
         replaceAllAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+shift+r"), self)
         replaceAllAction.activated.connect(self.__findReplace)
 
-        self.actionLine_Move_Ctrl_Shift_up_down.triggered.connect(self.__lineUp)
+        self.actionLineMove.triggered.connect(self.__lineUp)
         lineUpAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+shift+u"), self)
         lineUpAction.activated.connect(self.__lineUp)
 
-        self.actionLine_Down_Ctrl_Shift_d.triggered.connect(self.__lineDown)
+        self.actionLineDown.triggered.connect(self.__lineDown)
         lineDownAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+shift+d"), self)
         lineDownAction.activated.connect(self.__lineDown)
 
-        self.actionFold_All.triggered.connect(self.__foldAll)
+        self.actionFoldAll.triggered.connect(self.__foldAll)
+        foldAllAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+f"), self)
+        foldAllAction.activated.connect(self.__foldAll)
+
+        self.actionFoldCurrent.triggered.connect(self.__foldCurrent)
+        foldCurrentAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+c"), self)
+        foldCurrentAction.activated.connect(self.__foldCurrent)
+
+        self.actionClearFoldings.triggered.connect(self.__clearFold)
+        clearFoldAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("alt+z"), self)
+        clearFoldAction.activated.connect(self.__clearFold)
+
+        self.actionPythonInterpreter.triggered.connect(self.__showHideInterpreter)
+
+    def __showHideInterpreter(self):
+        if self.interpreterDockWidget.isVisible():
+            self.interpreterDockWidget.setVisible(False)
+        else:
+            self.interpreterDockWidget.setVisible(True)
 
     def __createNewEditor(self):
         tabName = "untitled_{0}".format(str(next(self.nextFileCount)))
@@ -140,7 +164,8 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 )
         if not directory:
             return
-        self.treeView.displayDirectory(directory)
+        self.directoryTreeView.displayDirectory(directory)
+        self.directoryTreeDockWidget.setVisible(True)
 
     def __openFileDialog(self):
         files = _QtWidgets.QFileDialog.getOpenFileNames(
@@ -284,9 +309,25 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             editor = self.__getFocusedEditor()
             if editor:
-                editor.foldAll()
+                editor.foldEntireFile()
         except Exception as ex:
             print (ex.message)
+
+    def __foldCurrent(self):
+        try:
+            editor = self.__getFocusedEditor()
+            if editor:
+                editor.foldCurrentMethod()
+        except Exception as ex:
+            print(ex.message)
+
+    def __clearFold(self):
+        try:
+            editor = self.__getFocusedEditor()
+            if editor:
+                editor.clearAllFoldings()
+        except Exception as ex:
+            print(ex.message)
 
     def __getFocusedEditor(self):
         for i in range(self.tabWidget.count()):
@@ -369,7 +410,6 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
 
     def __replace(self):
         editor = self.__getFocusedEditor()
-        editor = self.tabWidget.widget(1)
         if editor:
             try:
                 editor.replace(
@@ -393,7 +433,7 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 print (ex)
 
     def __createFileTab(self, index):
-        item = self.treeView.model().itemFromIndex(index)
+        item = self.directoryTreeView.model().itemFromIndex(index)
         if not _os.path.isfile(item.fullPath):
             return
         editor = EditorWidget(filePath=item.fullPath)
@@ -418,7 +458,7 @@ if __name__ == '__main__':
     app = _QtWidgets.QApplication(sys.argv)
     try:
         console = MainApplication()
-        styleFile = _os.path.join(_os.path.dirname(__file__), 'resources', 'styleSheet', 'QTDark.stylesheet')
+        styleFile = _os.path.join(_os.path.dirname(__file__), 'resources', 'styleSheet', 'QTDark1.stylesheet')
         with open(styleFile, "r") as fh:
             app.setStyleSheet(fh.read())
         console.show()
