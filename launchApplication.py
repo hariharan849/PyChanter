@@ -19,6 +19,7 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.dialog = None
+        self._caseSensitive = False
         self.__setUpActionMenus()
         self._connectWidgets()
         self.__createNewEditor()
@@ -33,6 +34,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
     def _connectWidgets(self):
         self.findButton.clicked.connect(self.__find)
         self.findAllButton.clicked.connect(self.__findAll)
+        self.findPrevButton.clicked.connect(lambda: self.__find(searchForward=False))
+        self.highlightButton.clicked.connect(self.__highLight)
+        self.caseSensitiveButton.clicked.connect(self._setCaseSensitivity)
         self.replaceButton.clicked.connect(self.__replace)
         self.replaceAllButton.clicked.connect(self.__replaceAll)
         self.directoryTreeView.doubleClicked.connect(self.__createFileTab)
@@ -391,12 +395,15 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
     def __findReplace(self):
         self.findReplaceWidget.setVisible(True)
 
-    def __find(self):
+    def _setCaseSensitivity(self):
+        self._caseSensitive = True
+
+    def __find(self, searchForward=True):
         # editor = self.__getFocusedEditor()
         editor = self.tabWidget.widget(1)
         if editor:
             try:
-                editor.find(self.findValue.text())
+                editor.find(self.findValue.text(), searchForward=searchForward, caseSensitive=self._caseSensitive)
             except Exception as ex:
                 print (ex)
 

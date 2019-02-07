@@ -129,6 +129,7 @@ class EditorWidget(QsciScintilla):
 
         import os as _os
         styleFile = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)), 'resources', 'styleSheet', 'QTDark1.stylesheet')
+        print (styleFile)
         with open(styleFile, "r") as fh:
             self.setStyleSheet(fh.read())
 
@@ -779,11 +780,13 @@ class EditorWidget(QsciScintilla):
         # Replace the text with the new
         self.replaceSelectedText(newText)
 
-    def find(self, findText, findAll=False):
+    def find(self, findText, findAll=False, searchForward=True, caseSensitive=False):
         if findAll:
             self.findAll(findText)
+        elif searchForward:
+            self.findText(findText, searchForward=searchForward, caseSensitive=caseSensitive)
         else:
-            self.findText(findText)
+            self.findText(findText, caseSensitive=caseSensitive)
 
     def replace(self, findText, replaceText, replaceAll=False):
         if replaceAll:
