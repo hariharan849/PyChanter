@@ -9,11 +9,13 @@ from launchApplicationUI import Ui_MainWindow
 from widgets import CustomEditorTab, EditorWidget, InputDialog, DirectoryTree, FindAllDialog, AutoCompleter
 
 class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
-    # nextFileCount = _itertools.count(0, 1)
     nextFileCount = -1
     recentDirectory = ""
     recentFiles = []
     def __init__(self, parent=None):
+        """
+        Main Application to integrate directoy tree, editor and interpreter
+        """
         super(MainApplication, self).__init__(parent)
         self.setupUi(self)
         completerThread = AutoCompleter()
@@ -43,18 +45,22 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         Sets up action slot connection for the application
         """
         self.actionNew.triggered.connect(self.__createNewEditor)
+        self.actionNew.setIcon(_QtGui.QIcon("icons/new.png"))
         newFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+n"), self)
         newFile.activated.connect(self.__createNewEditor)
 
         self.actionOpen_File.triggered.connect(self.__openFileDialog)
+        self.actionOpen_File.setIcon(_QtGui.QIcon("icons/open2.png"))
         openFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+o"), self)
         openFile.activated.connect(self.__openFileDialog)
 
         self.actionOpen_Directory.triggered.connect(self.__openDirectoryDialog)
+        self.actionOpen_Directory.setIcon(_QtGui.QIcon("icons/open.png"))
         # openFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+o"), self)
         # openFile.activated.connect(self.__openFileDialog)
 
         self.actionSave.triggered.connect(self.__saveFile)
+        self.actionSave.setIcon(_QtGui.QIcon("icons/save.png"))
         saveFile = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+s"), self)
         saveFile.activated.connect(self.__saveFile)
 
@@ -71,14 +77,17 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         exitAction.activated.connect(self.__safeExit)
 
         self.actionCut.triggered.connect(self.__cut)
+        self.actionCut.setIcon(_QtGui.QIcon("icons/cut.png"))
         cutAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+x"), self)
         cutAction.activated.connect(self.__cut)
 
         self.actionCopy.triggered.connect(self.__copy)
+        self.actionCopy.setIcon(_QtGui.QIcon("icons/copy.png"))
         copyAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+c"), self)
         copyAction.activated.connect(self.__copy)
 
         self.actionPaste.triggered.connect(self.__paste)
+        self.actionPaste.setIcon(_QtGui.QIcon("icons/paste.png"))
         pasteAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+v"), self)
         pasteAction.activated.connect(self.__paste)
 
@@ -99,6 +108,7 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         gotoLineAction.activated.connect(self.__gotoLine)
 
         self.actionHighlight.triggered.connect(self.__highLight)
+        self.actionHighlight.setIcon(_QtGui.QIcon("icons/highlight.png"))
         highlightAction = _QtWidgets.QShortcut(_QtGui.QKeySequence("ctrl+m"), self)
         highlightAction.activated.connect(self.__highLight)
 
@@ -132,16 +142,54 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         autoCompleteAction.activated.connect(self.__triggerAutoComplete)
 
     def __createNewEditor(self):
+        """
+        Create new editor with empty text
+        """
         tabName = "untitled_{0}".format(str(self.nextFileCount+1))
         editor = EditorWidget()
-        print (dir(editor))
+        editor.gotoDefClicked.connect(self._handleGotoDefinition)
         newIndex = self.editorTabWidget.addTab(editor, _os.path.basename(tabName))
         editor.textChanged.connect(self.editorTabWidget.textChangedSlot)
         self.editorTabWidget.setCurrentIndex(newIndex)
         editor.setFocus()
         self.nextFileCount += 1
 
+    def __createFindInDirectoryEditor(self, dirPath, searchText):
+        """
+        Create Find all widget
+        """
+        tabName = "Find In Directory".format(str(self.nextFileCount + 1))
+        editor = EditorWidget()
+        editor.searchTextClicked.connect(self._handleFindTextClicked)
+        newIndex = self.editorTabWidget.addTab(editor, _os.path.basename(tabName))
+        self.editorTabWidget.setCurrentIndex(newIndex)
+        editor.setFocus()
+
+        findResults =  editor.findTextInDirectory(searchText, dirPath)
+        mappedFindResults, editorFindResultsMapping = {}, {}
+        textLines = []
+        count = 1
+
+        for fileName, searchResults in findResults.items():
+            textLines.append(fileName)
+            count += 1
+            for lineInfo in searchResults:
+                for lineNo, lineText in lineInfo.items():
+                    editorFindResultsMapping[count] = (fileName, lineNo+1, searchText)
+                    count += 1
+                    lineString = "Line No: {0} {1}".format(lineNo+1, lineText.lstrip())
+                    textLines.append(lineString)
+            textLines.append('\n')
+            count += 2
+        editor.setText("\n".join(textLines))
+        editor.setFindMapping(editorFindResultsMapping)
+        matches = editor.highlightText(searchText)
+        editor.createHotspot(matches, searchText)
+
     def __openDirectoryDialog(self):
+        """
+        Opens file dialog to browse directory
+        """
         directory = _QtWidgets.QFileDialog.getExistingDirectory(
             self,
             "Open Directory",
@@ -158,8 +206,10 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             _QtWidgets.QMessageBox.warning(self, 'Warning', message, buttons=_QtWidgets.QMessageBox.Ok)
             return
 
-
     def __openFileDialog(self):
+        """
+        Open file dialog to browse file
+        """
         files = _QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Open File",
@@ -174,6 +224,7 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                     return
                 tabName = tabName[0]
             editor = EditorWidget(filePath=tabName)
+            editor.gotoDefClicked.connect(self._handleGotoDefinition)
             editor.textChanged.connect(self.editorTabWidget.textChangedSlot)
 
             newIndex = self.editorTabWidget.addTab(editor, _os.path.basename(tabName))
@@ -193,6 +244,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         self.moduleTreeView.doubleClicked.connect(editor.moduleInfoClicked)
 
     def __saveFile(self):
+        """
+        Saves current filed
+        """
         encoding = 'utf-8'
         if not isinstance(self.editorTabWidget.currentWidget(), EditorWidget):
             return
@@ -224,6 +278,10 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             print (ex)
 
     def __saveFileAs(self):
+        """
+        Saves As Functionality
+        :return:
+        """
         encoding = 'utf-8'
         if not isinstance(self.editorTabWidget.currentWidget(), EditorWidget):
             return
@@ -251,6 +309,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             print (ex)
 
     def __closeAllTabs(self):
+        """
+        Closes all tabs
+        """
         for count in range(self.editorTabWidget.count()):
             if isinstance(self.editorTabWidget.widget(count), EditorWidget) and self.editorTabWidget.widget(count).isEdited:
                 reply = _QtWidgets.QMessageBox.critical(
@@ -265,6 +326,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         self.nextFileCount = -1
 
     def __closeCurrentTab(self):
+        """
+        Closes current tab
+        """
         if isinstance(self.editorTabWidget.currentWidget(), EditorWidget) and self.editorTabWidget.currentWidget().isEdited:
             reply = _QtWidgets.QMessageBox.critical(
                 self,
@@ -277,6 +341,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         self.nextFileCount -= 1
 
     def __safeExit(self):
+        """
+        Handles modified file on close
+        """
         for count in range(self.editorTabWidget.count()):
             if isinstance(self.editorTabWidget.widget(count), EditorWidget) and self.editorTabWidget.widget(count).isEdited:
                 reply = _QtWidgets.QMessageBox.critical(
@@ -290,6 +357,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                     self.close()
 
     def __cut(self):
+        """
+        Handles cut functionality
+        """
         try:
             editor = self.__getFocusedEditor()
             if editor:
@@ -298,12 +368,18 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             print (ex.message)
 
     def __getFocusedEditor(self):
+        """
+        Returns the curently focussed widget
+        """
         for i in range(self.editorTabWidget.count()):
             if isinstance(self.editorTabWidget.widget(i), EditorWidget) and self.editorTabWidget.widget(i).hasFocus():
                 return self.editorTabWidget.widget(i)
         return self.editorTabWidget.widget(i)
 
     def __copy(self):
+        """
+        Handles copy fuinctionality
+        """
         try:
             editor = self.__getFocusedEditor()
             if editor:
@@ -312,6 +388,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             print (ex.message)
 
     def __paste(self):
+        """
+        Handles paste fuinctionality
+        """
         try:
             editor = self.__getFocusedEditor()
             print (editor, self.editorTabWidget.currentWidget())
@@ -321,6 +400,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             print (ex.message)
 
     def __commentUncomment(self):
+        """
+        Handles toggle comment fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             selection = editor.getSelection()
@@ -334,16 +416,25 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 editor.togglecommentLines(startLineNumber, endLineNumber)
 
     def __moveEditorLineDown(self):
+        """
+        Handles line down fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             editor.moveLineDown()
 
     def __moveEditorLineUp(self):
+        """
+        Handles line up fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             editor.moveLineUp()
 
     def __gotoLine(self):
+        """
+        Handles go to line fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             self.dialog = InputDialog(title='Enter Line No', parent=self)
@@ -355,11 +446,17 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             editor.setSelection(lineNumber-1, 0, lineNumber-1, len(lineText))
 
     def __highLight(self):
+        """
+        Handles highlight fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             editor.highlightText(editor.selectedText())
 
     def __convertCase(self, caseType='l'):
+        """
+        Handles casing fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             try:
@@ -368,6 +465,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 print (ex)
 
     def __enableFindReplaceWidget(self, isReplace=False):
+        """
+        Handles find/replace fuinctionality
+        """
         self.findReplaceWidget.setVisible(True)
         editor = self.__getFocusedEditor()
         if editor:
@@ -377,6 +477,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
         self.replaceAllButton.setVisible(isReplace)
 
     def __find(self, previous=False):
+        """
+        Handles find fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             try:
@@ -385,14 +488,23 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 print (ex)
 
     def __findAll(self):
-        dialog = FindAllDialog(title="Find All", parent=self)
+        """
+        Handles find all fuinctionality
+        """
+        editor = self.__getFocusedEditor()
+        dialog = FindAllDialog(title="Find All", parent=editor)
         dialog.exec_()
-        directory = dialog.lineValue.text()
-        if not directory:
+        directory = dialog.directoryValue.text()
+        searchText = dialog.findValue.text()
+        if not directory or not searchText:
             return
+        self.__createFindInDirectoryEditor(directory, searchText)
 
 
     def __replace(self):
+        """
+        Handles replace fuinctionality
+        """
         editor = self.__getFocusedEditor()
         editor = self.editorTabWidget.widget(1)
         if editor:
@@ -405,6 +517,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 print (ex)
 
     def __replaceAll(self):
+        """
+        Handles replace fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             try:
@@ -417,10 +532,16 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
                 print (ex)
 
     def __launchInterpreter(self):
+        """
+        Launches interpreter widget
+        """
         self.interpreterDockWidget.setVisible(True)
         self.interpreterWidget.show()
 
     def __runFile(self):
+        """
+        Handles run fuinctionality
+        """
         self.interpreterDockWidget.setVisible(True)
         self.interpreterWidget.show()
         editor = self.__getFocusedEditor()
@@ -428,6 +549,9 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             self.interpreterWidget.runFile(editor.filePath)
 
     def __triggerAutoComplete(self):
+        """
+        Handles autocomplete fuinctionality
+        """
         editor = self.__getFocusedEditor()
         if editor:
             editor.triggerAutoComplete()
@@ -438,7 +562,66 @@ class MainApplication(_QtWidgets.QMainWindow, Ui_MainWindow):
             self.dialog.setParent(None)
             self.dialog.deleteLater()
             self.dialog = None
+        if ev.key() == _QtCore.Qt.Key_F12:
+            editor = self.__getFocusedEditor()
+            if editor:
+                editor.triggerGotoDefinition()
         super(MainApplication, self).keyPressEvent(ev)
+
+    def _handleGoTo(self, lineNo, fileName):
+        for count in range(self.editorTabWidget.count()):
+            widget = self.editorTabWidget.widget(count)
+            if isinstance(widget, EditorWidget) and widget.filePath == fileName:
+                widget.setFocus()
+                widget.gotoLine(lineNo-1)
+                return widget
+
+        editor = EditorWidget(filePath=fileName)
+        editor.textChanged.connect(self.editorTabWidget.textChangedSlot)
+
+        newIndex = self.editorTabWidget.addTab(editor, _os.path.basename(fileName))
+        self.editorTabWidget.setCurrentIndex(newIndex)
+        editor.setFocus()
+        editor.gotoLine(lineNo-1)
+        return editor
+
+    def _handleFindTextClicked(self, fileName, lineNo, searchText):
+        """
+        Handles line clicked fuinctionality
+        """
+        # for count in range(self.editorTabWidget.count()):
+        #     widget = self.editorTabWidget.widget(count)
+        #     if isinstance(widget, EditorWidget) and widget.filePath == fileName:
+        #         widget.setFocus()
+        #         widget.gotoLine(lineNo-1)
+        #         widget.highlightText(searchText)
+        #         return
+        #
+        # editor = EditorWidget(filePath=fileName)
+        # editor.textChanged.connect(self.editorTabWidget.textChangedSlot)
+        #
+        # newIndex = self.editorTabWidget.addTab(editor, _os.path.basename(fileName))
+        # self.editorTabWidget.setCurrentIndex(newIndex)
+        # editor.setFocus()
+        # editor.gotoLine(lineNo-1)
+        # editor.highlightText(searchText)
+        obj = self._handleGoTo(lineNo, fileName)
+        if isinstance(obj, EditorWidget):
+            obj.highlightText(searchText)
+        else:
+            obj.highlightText(searchText)
+
+    def _handleGotoDefinition(self, lineNo, filePath):
+        """
+        Handles GOTO defintion clicked
+        :param lineNo: int
+        :param filePath: str
+        """
+        self._handleGoTo(lineNo, filePath)
+
+    def closeEvent(self, ev):
+        super().closeEvent(self)
+        raise Exception()
 
 
 if __name__ == '__main__':

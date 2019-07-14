@@ -52,6 +52,9 @@ class EditorWidget(_Qsci.QsciScintilla):
     HIGHLIGHTINDICATOR = 0
     FIND_INDICATOR = 2
     REPLACE_INDICATOR = 3
+    INDICATOR_NUMBER = 5
+    searchTextClicked = _QtCore.pyqtSignal(str, int, object)
+    gotoDefClicked = _QtCore.pyqtSignal(int, str)
     def __init__(self, parent=None, filePath=None):
         """
         Editor widget based on QsciScintilla
@@ -61,6 +64,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         super(EditorWidget, self).__init__(parent)
 
         self._filePath = filePath
+        self._findMapping = None
         self._setLexerAndFont()
         self._setFileText(filePath)
         self._setTextWrap()
@@ -75,13 +79,17 @@ class EditorWidget(_Qsci.QsciScintilla):
         self.setTheme(_water)
         self._setStyleSheet()
 
-        # self.textChanged.connect(self._triggerAutoCompletion)
+        self.setContextMenuPolicy(_QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.createCustomContextMenu)
 
     @property
     def filePath(self):
         return self._filePath
 
     def setTheme(self, theme):
+        """
+        Sets theme for editor
+        """
         self.setFoldMarginColors(
             theme.FoldMargin.ForeGround,
             theme.FoldMargin.BackGround
@@ -107,10 +115,12 @@ class EditorWidget(_Qsci.QsciScintilla):
         )
 
     def _setStyleSheet(self):
+        """
+        Set stylesheet for application
+        """
         styleFile = _constants.styleSheetFolder
         with open(styleFile, "r") as fh:
             self.setStyleSheet(fh.read())
-            print (styleFile)
 
     def _setLexerAndFont(self):
         """
@@ -227,7 +237,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         Widget connections goes here
         """
         self.marginClicked.connect(self.__marginLeftClicked)
-        self.marginRightClicked.connect(self.__margin_right_clicked)
+        self.marginRightClicked.connect(self.__marginRightClicked)
 
     def getLineText(self, lineNumber):
         """
@@ -325,7 +335,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         """
         self.foldLine(lineNumber)
 
-    def setIndicatorHighlight(self):
+    def _setIndicatorHighlight(self):
         """
         Sets highlight color
         """
@@ -335,6 +345,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         )
 
     def _indexStringsInText(self, searchText, text, caseSensitive=False, regularExpression=False, textToBytes=False, wholeWords=False):
+
         # Check if whole words only should be matched
         if wholeWords == True:
             searchText = r"\b(" + searchText + r")\b"
@@ -355,6 +366,9 @@ class EditorWidget(_Qsci.QsciScintilla):
         return listOfMatches
 
     def findAll(self):
+        """
+        Show find all
+        """
         matches = self._indexStringsInText(
             searchText,
             inputText,
@@ -364,8 +378,10 @@ class EditorWidget(_Qsci.QsciScintilla):
             wholeWords
         )
 
-    def findAllFromInputText(self, searchText, inputText, caseSensitive=False, regularExpression=False, textToBytes=False, wholeWords=False):
-        """Find all instances of a string and return a list of (line, index_start, index_end)"""
+    def _findAllFromInputText(self, searchText, inputText, caseSensitive=False, regularExpression=False, textToBytes=False, wholeWords=False):
+        """
+        Find all instances of a string and return a list of (line, index_start, index_end)
+        """
         #Find all instances of the search string and return the list
         matches = self._indexStringsInText(
             searchText,
@@ -377,7 +393,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         )
         return matches
 
-    def highlightRaw(self, highlightList):
+    def _highlightRaw(self, highlightList):
         """
         Core highlight function that uses Scintilla messages to style indicators.
         QScintilla's fillIndicatorRange function is to slow for large numbers of
@@ -538,9 +554,9 @@ class EditorWidget(_Qsci.QsciScintilla):
         :param regularExpression: boolean
         """
         #Setup the indicator style, the highlight indicator will be 0
-        self.setIndicatorHighlight()
+        self._setIndicatorHighlight()
         #Get all instances of the text using list comprehension and the re module
-        matches = self.findAllFromInputText(
+        matches = self._findAllFromInputText(
             highlightText,
             self.text(),
             caseSensitive=caseSensitive,
@@ -550,14 +566,15 @@ class EditorWidget(_Qsci.QsciScintilla):
         #Check if the match list is empty
         if matches:
             #Use the raw highlight function to set the highlight indicators
-            self.highlightRaw(matches)
+            self._highlightRaw(matches)
             self._findText(highlightText, caseSensitive, True, regularExpression)
+            return matches
         else:
             print ("no Matches")
 
     def convertCase(self, caseType='l'):
         """
-        Toogles case sensitivity on caseType(l or u)
+        Toggles case sensitivity on caseType(l or u)
         :param caseType: str
         """
         #Get the start and end point of the selected text
@@ -675,7 +692,7 @@ class EditorWidget(_Qsci.QsciScintilla):
             indicator
         )
 
-    def setIndicatorReplace(self):
+    def _setIndicatorReplace(self):
         """
         Set the appearance of the highlight indicator
         """
@@ -789,13 +806,9 @@ class EditorWidget(_Qsci.QsciScintilla):
         # Clear all previous highlights
         self._clearHighlights()
         # Setup the indicator style, the replace indicator is 1
-        self.setIndicatorReplace()
+        self._setIndicatorReplace()
         # Correct the displayed file name
         file_name = self._filePath
-        # if self.save_name == None or self.save_name == "":
-        #     file_name = self.parent.tabText(self.parent.currentIndex())
-        # else:
-        #     file_name = os.path.basename(self.save_name)
         # Check if there are any instances of the search text in the document
         # based on the regular expression flag
         searchResult = None
@@ -857,7 +870,7 @@ class EditorWidget(_Qsci.QsciScintilla):
                     message += "Too many to list individually!"
                     print (message)
                 # Highlight and display the line difference between the old and new texts
-                self.highlightRaw(corrected_matches)
+                self._highlightRaw(corrected_matches)
             else:
                 # Display the replacements in the REPL tab
                 if len(matches) < settings.Editor.maximum_highlights:
@@ -880,7 +893,7 @@ class EditorWidget(_Qsci.QsciScintilla):
                     message += "Too many to list individually!"
                     print(message)
                 # Highlight and display the replaced text
-                self.highlightRaw(matches)
+                self._highlightRaw(matches)
             # Restore the previous cursor position
             self.setCursorPosition(currentPosition[0], currentPosition[1])
         else:
@@ -888,46 +901,56 @@ class EditorWidget(_Qsci.QsciScintilla):
             message += "Change the search/replace string or change the case sensitivity!"
             print(message)
 
-    def replaceInSelection(self, searchText, replaceText, caseSensitive=False, regularExpression=False):
-        """Replace all occurences of a string in the current selection in the scintilla document"""
-        # Get the start and end point of the selected text
-        startLine, startIndex, end_line, end_index = self.getSelection()
-        # Get the currently selected text and use the re module to replace the text
-        selected_text = self.selectedText()
-        replacedText = functions.regex_replaceText(
-            selected_text,
-            searchText,
-            replaceText,
-            caseSensitive,
-            regularExpression
-        )
-        # Check if any replacements were made
-        if replacedText != selected_text:
-            # Put the text back into the selection space and select it again
-            self.replaceSelectedText(replacedText)
-            newEndLine = startLine
-            newEndIndex = startIndex + len(bytearray(replacedText, "utf-8"))
-            self.setSelection(startLine, startIndex, newEndLine, newEndIndex)
-        else:
-            message = "No replacements were made!"
-            print (message)
+    # def replaceInSelection(self, searchText, replaceText, caseSensitive=False, regularExpression=False):
+    #     """Replace all occurences of a string in the current selection in the scintilla document"""
+    #     # Get the start and end point of the selected text
+    #     startLine, startIndex, end_line, end_index = self.getSelection()
+    #     # Get the currently selected text and use the re module to replace the text
+    #     selected_text = self.selectedText()
+    #     replacedText = functions.regex_replaceText(
+    #         selected_text,
+    #         searchText,
+    #         replaceText,
+    #         caseSensitive,
+    #         regularExpression
+    #     )
+    #     # Check if any replacements were made
+    #     if replacedText != selected_text:
+    #         # Put the text back into the selection space and select it again
+    #         self.replaceSelectedText(replacedText)
+    #         newEndLine = startLine
+    #         newEndIndex = startIndex + len(bytearray(replacedText, "utf-8"))
+    #         self.setSelection(startLine, startIndex, newEndLine, newEndIndex)
+    #     else:
+    #         message = "No replacements were made!"
+    #         print (message)
 
     def _replaceEntireText(self, newText):
-        """Replace the entire text of the document"""
+        """
+        Replace the entire text of the document
+        """
         # Select the entire text
         self.selectAll(True)
         # Replace the text with the new
         self.replaceSelectedText(newText)
 
     def find(self, findText, findAll=False, searchForward=True, caseSensitive=False):
-        if findAll:
-            self.findAllFromInputText(findText, self.text())
-        elif searchForward:
-            self._findText(findText, searchForward=searchForward, caseSensitive=caseSensitive)
-        else:
-            self._findText(findText, caseSensitive=caseSensitive)
+        """
+        Find the text in the editor
+        :param findText: Search text
+        :param findAll: Bool to highlight text
+        :param searchForward: Bool search the text forward
+        :param caseSensitive: Bool case sensitive
+        """
+        self._findText(findText, searchForward=searchForward, caseSensitive=caseSensitive)
 
     def replace(self, findText, replaceText, replaceAll=False):
+        """
+        Replace the text
+        :param findText: str to find
+        :param replaceText: str to replace
+        :param replaceAll: bool falg to replaceAll
+        """
         if replaceAll:
             self._replaceAll(findText, replaceText)
         else:
@@ -960,7 +983,7 @@ class EditorWidget(_Qsci.QsciScintilla):
             else:
                 self.markerAdd(lineNo, 3)
 
-    def __margin_right_clicked(self, marginNo, line_nr, state):
+    def __marginRightClicked(self, marginNo, line_nr, state):
         pass
 
     @staticmethod
@@ -983,7 +1006,7 @@ class EditorWidget(_Qsci.QsciScintilla):
             for file in files:
                 # Merge the path and filename
                 completeFilePath = _os.path.join(root, file)
-                if EditorWidget.validateTextFile(completeFilePath) != None:
+                if EditorWidget._validateTextFile(completeFilePath) != None:
                     # On windows, the function "_os.path.join(root, file)" line gives a combination of "/" and "\\",
                     # which looks weird but works. The replace was added to have things consistent in the return file list.
                     completeFilePath = completeFilePath.replace("\\", "/")
@@ -992,7 +1015,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         returnFileDict = _collections.defaultdict(list)
         for file in textFileList:
             try:
-                fileLines = EditorWidget.readFileToList(file)
+                fileLines = EditorWidget._readFileToList(file)
                 # Set the comparison according to case sensitivity
                 if caseSensitive == False:
                     compareSearchText = searchText.lower()
@@ -1003,14 +1026,6 @@ class EditorWidget(_Qsci.QsciScintilla):
                     if caseSensitive == False:
                         line = line.lower()
                     if compareSearchText in line:
-                        # try:
-                        #     previousLine = fileLines[i-1] + "\n"
-                        # except IndexError:
-                        #     previousLine = ""
-                        # try:
-                        #     nextLine = fileLines[i+1] + "\n"
-                        # except IndexError:
-                        #     nextLine = ""
                         returnFileDict[file].append({i: fileLines[i]})
             except:
                 continue
@@ -1018,7 +1033,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         return returnFileDict
 
     @staticmethod
-    def validateTextFile(fileWithPath):
+    def _validateTextFile(fileWithPath):
         """Test if a file is a plain text file and can be read"""
         try:
             file = open(fileWithPath, "r", encoding=_locale.getpreferredencoding(), errors="strict")
@@ -1049,22 +1064,22 @@ class EditorWidget(_Qsci.QsciScintilla):
         return None
 
     @staticmethod
-    def readFileToList(filePath):
+    def _readFileToList(filePath):
         """Read contents of a text file to a list"""
-        text = EditorWidget.readFileToString(filePath)
+        text = EditorWidget._readFileToString(filePath)
         if text != None:
             return text.split("\n")
         else:
             return None
 
     @staticmethod
-    def readFileToString(filePath):
+    def _readFileToString(filePath):
         """
         Read contents of a text file to a single string
         :param filePath: str
         """
         # Test if a file is in binary format
-        binaryText = EditorWidget.testBinaryFile(filePath)
+        binaryText = EditorWidget._testBinaryFile(filePath)
         if binaryText != None:
             return
         else:
@@ -1088,7 +1103,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         return None
 
     @staticmethod
-    def testBinaryFile(filePath):
+    def _testBinaryFile(filePath):
         """Test if a file is in binary format"""
         file = open(filePath, "rb")
         #Read only a couple of lines in the file
@@ -1111,8 +1126,7 @@ class EditorWidget(_Qsci.QsciScintilla):
         rowNo, colNo = self.getCursorPosition()
         if not colNo:
             return
-        # self.__api.clear()
-        script = _jedi.Script(self.text(), rowNo + 1, colNo)
+        script = _jedi.Script(self.text(), rowNo + 1, colNo, self._filePath)
         for ac in script.completions():
             completion = ac.name
             if completion.startswith("_"):
@@ -1126,31 +1140,177 @@ class EditorWidget(_Qsci.QsciScintilla):
                     funcParams = []
                     for param in sig.params:
                         funcParams.append(param.full_name)
-                    print ("{0}({1})".format(funcName, ", ".join(funcParams)))
                     self.__api.add("{0}({1})".format(funcName, ", ".join(funcParams)))
-
-                # print (sig.docstring())
-                # self.__api.add(sig.docstring())
-            # print (signature[0].docstring())
-            # print (dir(signature[0]))
-            # raise Exception()
 
         self.__api.prepare()
         self.autoCompleteFromAPIs()
 
     def moduleInfoClicked(self, item):
+        """
+        Handles Click from node tree
+        """
         lineNumber = item.data().split(":")
         if lineNumber:
             # Parsing String
             lineNumber = lineNumber[-1][:-1]
             self.gotoLine(int(lineNumber))
 
-    def keyPressEvent(self, ev):
-        super(EditorWidget, self).keyPressEvent(ev)
-        if ev.key() == _QtCore.Qt.Key_Alt:
-            self._displayDocString()
-    
+    def _findAllClick(self, line, index, keys):
+        """
+        Connect to the indicator signals for feedback when an indicator is clicked or
+        a mouse button is released over an indicator
+        """
+        # Use the low level SendScintilla function to get the indicator's value
+        position = self.positionFromLineIndex(line, index)
+        # The value can only be set using the low level API described at line 165
+        # of this file. Otherwise the value will always be '1'.
+        value = self.SendScintilla(
+            _Qsci.QsciScintilla.SCI_INDICATORVALUEAT,
+            self.INDICATOR_NUMBER,
+            position
+        )
+        textAtLine = self.text(line)
+        lineNo = textAtLine.split()[2]
 
+        fileName, lineNo, searchText = self._findMapping[line+1]
+        self.searchTextClicked.emit(fileName, lineNo, searchText)
+
+    def setFindMapping(self, findMapping):
+        """
+        Find Text mapping
+        :param findMapping: dict
+        """
+        self._findMapping = findMapping
+
+    def createHotspot(self, matches, searchText):
+        """
+        To add a value to an indicator that can later be retrieved by the click or release signals,
+        it is necessery to use the low level API to fill the indicator using SendScintilla!
+        """
+        # Select the indicator
+        self.SendScintilla(
+            _Qsci.QsciScintilla.SCI_SETINDICATORCURRENT,
+            self.INDICATOR_NUMBER
+        )
+        # Give it a value.
+        # This can be used for determinig how to handle the clicked/released indicator signals.
+        value = 123
+        self.SendScintilla(
+            _Qsci.QsciScintilla.SCI_SETINDICATORVALUE,
+            value
+        )
+        # Fill the indicator
+        for match in matches:
+            _, startPosition, _, endPosition = match
+            # fill_line = 4  # This is the 5th line in the document, as the indexes in Python start at 0!
+            # start_position = self.positionFromLineIndex(fill_line, 0)
+            # length = len(self.text(fill_line))
+            self.SendScintilla(
+                _Qsci.QsciScintilla.SCI_INDICATORFILLRANGE,
+                startPosition,
+                endPosition-startPosition
+            )
+
+        self.indicatorClicked.connect(self._findAllClick)
+
+    def createCustomContextMenu(self, ev):
+
+        menu = self.createStandardContextMenu()
+
+        gotoDefAction = _QtWidgets.QAction('Goto Definition')
+        gotoDefAction.triggered.connect(lambda: self.triggerGotoDefinition(ev))
+
+        menu.addAction(gotoDefAction)
+        menu.popup(self.mapToGlobal(ev))
+        menu.exec_()
+
+    def _getJediScript(self, ev):
+        """
+        Returns Script at passed ev
+        """
+        rowNo = self.lineAt(ev.pos())
+        if rowNo == -1:
+            return None, None
+        hoverWord = self.wordAtPoint(ev.pos())
+        colNo = self.text(rowNo).find(hoverWord)
+        if colNo == -1:
+            return None, None
+        return _jedi.Script(self.text(), rowNo + 1, colNo + 1, self._filePath), hoverWord
+
+    def triggerGotoDefinition(self):
+        rowNo, colNo = self.getCursorPosition()
+        if not colNo:
+            return
+        script = _jedi.Script(self.text(), rowNo + 1, colNo, self._filePath)
+        lineNos, modulePaths = [], []
+        for ac in script.goto_assignments():
+            lineNos.append(ac.line)
+            modulePaths.append(ac.module_path)
+
+        if len(lineNos) > 1:
+            pass
+        self.gotoDefClicked.emit(lineNos[0], modulePaths[0])
+
+    def mouseMoveEvent(self, ev):
+        """
+        Handles hovered word docstring
+        """
+        super(EditorWidget, self).mouseMoveEvent(ev)
+        pt = ev.pos()
+        script, hoverWord = self._getJediScript(ev)
+        if not script:
+            return
+        docString = ''
+        for ac in script.goto_assignments():
+            if not ac.docstring():
+                return
+            if hoverWord == ac.name:
+                print (ac.line)
+                print (ac.module_path)
+                docString = ac.docstring()
+                break
+        if not docString.strip():
+            return
+        pos = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_POSITIONFROMPOINTCLOSE,
+            pt.x(),
+            pt.y()
+        )
+        start = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_WORDSTARTPOSITION,
+            pos,
+            True
+        )
+        end = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_WORDENDPOSITION,
+            pos,
+            True
+        )
+        xStart = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_POINTXFROMPOSITION,
+            0,
+            start
+        )
+        yStart = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_POINTYFROMPOSITION,
+            0,
+            start
+        )
+        xEnd = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_POINTXFROMPOSITION,
+            0,
+            end
+        )
+        line = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_LINEFROMPOSITION,
+            start
+        )
+        height = self.SendScintilla(
+            _Qsci.QsciScintillaBase.SCI_TEXTHEIGHT,
+            line
+        )
+        rect = _QtCore.QRect(xStart, yStart, xEnd-xStart, height)
+        _QtWidgets.QToolTip.showText(ev.globalPos(), docString, self.viewport(), rect)
 
 ''' End Class '''
 

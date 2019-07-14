@@ -2,6 +2,7 @@
 Generic PyQtUtils goes here
 """
 
+import os as _os
 from PyQt5 import (
     QtCore as _QtCore,
     QtWidgets as _QtWidgets,
@@ -22,11 +23,11 @@ class InputDialog(_QtWidgets.QDialog):
         self.label.setObjectName("label")
         self._valueLayout.addWidget(self.label)
 
-        self.lineValue = _QtWidgets.QLineEdit(self)
-        self.lineValue.setObjectName("lineEdit")
-        self.lineValue.setStyleSheet("border-radius: 8px; color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); ")
-        self.lineValue.setPlaceholderText(title)
-        self._valueLayout.addWidget(self.lineValue)
+        self.directoryValue = _QtWidgets.QLineEdit(self)
+        self.directoryValue.setObjectName("lineEdit")
+        self.directoryValue.setStyleSheet("border-radius: 8px; color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); ")
+        self.directoryValue.setPlaceholderText(title)
+        self._valueLayout.addWidget(self.directoryValue)
 
         self._dialogLayout.addLayout(self._valueLayout)
 
@@ -44,53 +45,62 @@ class InputDialog(_QtWidgets.QDialog):
 class FindAllDialog(_QtWidgets.QDialog):
     def __init__(self, title='', parent=None):
         super(FindAllDialog, self).__init__(parent)
-        self.resize(400, 122)
+        self.setFixedSize(800, 122)
         self._dialogLayout = _QtWidgets.QVBoxLayout(self)
         self._dialogLayout.setObjectName("dialogLayout")
 
         self._valueLayout = _QtWidgets.QHBoxLayout()
         self._valueLayout.setObjectName("valueLayout")
 
-        self.lineValue = _QtWidgets.QLineEdit(self)
-        self.lineValue.setObjectName("lineEdit")
-        self.lineValue.setStyleSheet("border-radius: 8px; color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); ")
-        self.lineValue.setPlaceholderText(title)
-        self._valueLayout.addWidget(self.lineValue)
+        self.directoryValue = _QtWidgets.QLineEdit(self)
+        self.directoryValue.setObjectName("lineEdit")
+        self.directoryValue.setStyleSheet("border-radius: 8px; color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); ")
+        self.directoryValue.setPlaceholderText('Browse Search Directory')
+        self._valueLayout.addWidget(self.directoryValue)
 
         self.directoryButton = _QtWidgets.QToolButton(self)
         self.directoryButton.setText("Open Directory")
+        self.directoryButton.setFixedSize(_QtCore.QSize(120, 34))
         self._valueLayout.addWidget(self.directoryButton)
 
         self._dialogLayout.addLayout(self._valueLayout)
 
-        self.buttonBox = _QtWidgets.QDialogButtonBox(self)
-        self.buttonBox.setOrientation(_QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(_QtWidgets.QDialogButtonBox.Cancel | _QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
+        self._findLayout = _QtWidgets.QHBoxLayout()
+        self._findLayout.setObjectName("findLayout")
 
-        self._dialogLayout.addWidget(self.buttonBox)
+        self.findValue = _QtWidgets.QLineEdit(self)
+        self.findValue.setObjectName("findValue")
+        self.findValue.setPlaceholderText('Enter Search Text')
+        self.findValue.setStyleSheet(
+            "border-radius: 8px; color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); ")
+        self._findLayout.addWidget(self.findValue)
+        self.findAllButton = _QtWidgets.QPushButton(self)
+        self.findAllButton.setObjectName("findAllButton")
+        self.findAllButton.setText("Find All")
+        self.findAllButton.setFixedSize(_QtCore.QSize(120, 34))
+        self._findLayout.addWidget(self.findAllButton)
+
+        self._dialogLayout.addLayout(self._findLayout)
         self.setWindowTitle(title)
 
         self.directoryButton.clicked.connect(self._openDirectory)
-        self.buttonBox.accepted.connect(self.close)
-        self.buttonBox.rejected.connect(self.close)
+        self.findAllButton.clicked.connect(self.close)
 
     def _openDirectory(self):
         directory = _QtWidgets.QFileDialog.getExistingDirectory(
             self,
             "Open Directory",
-            self.parent().recentDirectory
+            _os.path.dirname(self.parent().filePath) if self.parent().filePath else ''
         )
         if not directory:
             return
-        self.lineValue.setText(directory)
-        self.adjustSize()
+        self.directoryValue.setText(directory)
 
 if __name__ == '__main__':
     import sys
     app = _QtWidgets.QApplication(sys.argv)
     try:
-        console = InputDialog()
+        console = FindAllDialog()
         console.show()
     except Exception as ex:
         print (ex)
